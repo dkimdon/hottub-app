@@ -1,0 +1,23 @@
+{
+  "name": "hottub-app",
+  "version": "1.0.0",
+  "description": "Management of CoHo Hot Tub",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dkimdon/hottub-app.git"
+  },
+  "author": "David Kimdon",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dkimdon/hottub-app/issues"
+  },
+  "homepage": "https://github.com/dkimdon/hottub-app#readme",
+  "dependencies": {
+    "assert-plus": "^1.0.0",
+    "aws-iot-device-sdk": "^2.2.1"
+  }
+}
