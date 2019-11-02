@@ -1,0 +1,434 @@
+---
+  AWSTemplateFormatVersion: "2010-09-09"
+  Description: "Bwa Console Backend Resources"
+  Parameters:
+    LambdaS3Bucket:
+      Type: String
+      Default: coho-bwa-console
+    LambdaS3Key:
+      Type: String
+      Default: api/devel/bwa-console-lambda-1572728908.zip
+    FullDomainName:
+      Type: String
+      Description: The full domain name e.g. app.example.com
+      AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+      ConstraintDescription: must be a valid DNS zone name.
+      Default: hottub.cohoecovillage.org
+    AcmCertificateArn:
+      Type: String
+      Description: the Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
+      AllowedPattern: "arn:aws:acm:.*"
+      Default: arn:aws:acm:us-east-1:660983422489:certificate/34a28389-4ac9-4ba8-ab0e-0a45db0a8f4f
+  Mappings:
+    RegionMap:
+      us-east-1:
+        S3HostedZoneId: Z3AQBSTGFYJSTF
+      us-west-1:
+        S3HostedZoneId: Z2F56UZL2M1ACD
+      us-west-2:
+        S3HostedZoneId: Z3BJ6K6RIION7M
+      eu-west-1:
+        S3HostedZoneId: Z1BKCTXD74EZPE
+      ap-southeast-1:
+        S3HostedZoneId: Z3O0J2DXBE1FTB
+      ap-southeast-2:
+        S3HostedZoneId: Z1WCIGYICN2BYD
+      ap-northeast-1:
+        S3HostedZoneId: Z2M4EHUR26P7ZW
+      sa-east-1:
+        S3HostedZoneId: Z31GFT0UA1I2H
+
+  Resources:
+
+ ################################################
+ # Data operations go through a AWS AppSync API #
+ ################################################
+
+    BwaGraphQLApi:
+      Type: AWS::AppSync::GraphQLApi
+      Properties:
+        Name: Bwa Api
+        LogConfig:
+          CloudWatchLogsRoleArn: !GetAtt AppSyncLoggingRole.Arn
+          FieldLogLevel: ALL
+        AuthenticationType: AMAZON_COGNITO_USER_POOLS
+        UserPoolConfig:
+          UserPoolId: !Ref UserPool
+          AwsRegion: !Ref AWS::Region
+          DefaultAction: ALLOW
+
+    SNSRole:
+      Type: AWS::IAM::Role
+      Description: "An IAM Role to allow Cognito to send SNS messages"
+      Properties:
+        ManagedPolicyArns:
+          - Ref: CognitoSNSPolicy
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - sts:AssumeRole
+              Principal:
+                Service:
+                  - cognito-idp.amazonaws.com
+      DependsOn:
+        - CognitoSNSPolicy
+
+    CognitoSNSPolicy:
+      Type: AWS::IAM::ManagedPolicy
+      Properties:
+        Description: Managed policy to allow Amazon Cognito to access SNS
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sns:publish
+              Resource: "*"
+
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Description: "A Cognito user pool for authenticating users"
+      Properties:
+        UserPoolName: !Sub ${AWS::StackName}-user-pool
+        AdminCreateUserConfig:
+          AllowAdminCreateUserOnly: True
+          InviteMessageTemplate:
+            EmailMessage: !Sub |
+              <p>
+              Welcome to the Bwa Console: https://${FullDomainName}
+              <p>
+              Your username is:
+              <p>
+              {username}
+              <p>
+              and your temporary 8 character password is:
+              <p>
+              {####}
+            EmailSubject: Bwa Console - Your temporary credentials
+            SMSMessage: To access the Bwa Console your username is {username} and temporary password is {####}.
+          UnusedAccountValidityDays: 7
+        AutoVerifiedAttributes:
+          - phone_number
+          - email
+        MfaConfiguration: "ON"
+        SmsAuthenticationMessage: Your authentication code for the Bwa Console is {####}
+        SmsConfiguration:
+          ExternalId: !Sub ${AWS::StackName}-external
+          SnsCallerArn: !GetAtt SNSRole.Arn
+        Schema:
+          - Name: email
+            AttributeDataType: String
+            Mutable: false
+            Required: true
+          - Name: phone_number
+            AttributeDataType: String
+            Mutable: true
+            Required: true
+
+    UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Description: "App Client used by AWS AppSync"
+      Properties:
+        ClientName: !Sub ${AWS::StackName}-appsync-client
+        GenerateSecret: false
+        RefreshTokenValidity: 1
+        UserPoolId: !Ref UserPool
+
+ ####################################################
+ # Define the GraphQL schema, this defines what     #
+ # API operations are available to the application. #
+ ####################################################
+
+    BwaGraphQLSchema:
+      Type: AWS::AppSync::GraphQLSchema
+      Properties:
+        Definition: |
+          schema {
+           query: Query
+          }
+          type pingResponse {
+           id: String
+          }
+          type sampleChannelDataResponse {
+           thingName: String
+           ts: Int
+           batteryVoltage: Float
+          }
+          type metricsElement {
+           thingName: String!
+           ts: Int!
+           batteryVoltage: Float
+          }
+          type Query {
+           ping(id: String): pingResponse
+           sampleChannelData(thingName: String): sampleChannelDataResponse
+           getMetrics(thingNames: [String!]!, startTs: Int!, endTs: Int!): [metricsElement]!
+          }
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+
+# Define the datasource associated with our Lambda function.  All requests go
+# through this lambda function.
+    LambdaDataSource:
+      Type: AWS::AppSync::DataSource
+      Properties:
+        Name: jacobiConsoleLambda
+        Type: AWS_LAMBDA
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        ServiceRoleArn:  !GetAtt LambdaRole.Arn
+        LambdaConfig:
+          LambdaFunctionArn: !GetAtt LambdaFunction.Arn
+
+# The resolvers define the interface between the GraphQL API and the Datasources.
+# More information on resolver mapping syntax:
+# https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference.html
+    PingResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Query
+        FieldName: ping 
+        DataSourceName: !GetAtt LambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "ping",
+              "arguments": $utils.toJson($context.arguments)
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
+    SampleChannelDataResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Query
+        FieldName: sampleChannelData
+        DataSourceName: !GetAtt LambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "sample-channel-data",
+              "arguments": $utils.toJson($context.arguments),
+              "identity": {
+                "username" : $utils.toJson($context.identity.username)
+              }
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
+    GetMetricsResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Query
+        FieldName: getMetrics
+        DataSourceName: !GetAtt LambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "get-metrics",
+              "arguments": $utils.toJson($context.arguments),
+              "identity": {
+                "username" : $utils.toJson($context.identity.username)
+              }
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
+    AppSyncLoggingRole:
+      Type: AWS::IAM::Role
+      Properties: 
+        AssumeRolePolicyDocument: 
+          Version: "2012-10-17"
+          Statement: 
+            - 
+              Effect: Allow
+              Principal: 
+                Service: 
+                  - "appsync.amazonaws.com"
+              Action: 
+                - "sts:AssumeRole"
+        Path: "/"
+        Policies: 
+          - 
+            PolicyName: "LambdaAccess"
+            PolicyDocument: 
+              Version: "2012-10-17"
+              Statement: 
+                - 
+                  Action: 
+                     - logs:CreateLogGroup
+                     - logs:CreateLogStream
+                     - logs:PutLogEvents
+                  Effect: Allow
+                  Resource: "*"
+
+    LambdaExecutionRole:
+      Type: AWS::IAM::Role
+      Properties: 
+        AssumeRolePolicyDocument: 
+          Version: "2012-10-17"
+          Statement: 
+            - 
+              Effect: "Allow"
+              Principal: 
+                Service: 
+                  - "lambda.amazonaws.com"
+              Action: 
+                - "sts:AssumeRole"
+        Path: "/"
+        Policies: 
+          - 
+            PolicyName: "LambdaAccess"
+            PolicyDocument: 
+              Version: "2012-10-17"
+              Statement: 
+                - 
+                  Action: 
+                     - "logs:*"
+                  Effect: "Allow"
+                  Resource: "arn:aws:logs:*:*:*"
+                -
+                  Action:
+                     - "s3:ListAllMyBuckets"
+                     - "s3:GetBucketLocation"
+                  Effect: "Allow"
+                  Resource:
+                     - "*"
+                -
+                  Action:
+                     - "s3:*"
+                  Effect: "Allow"
+                  Resource:
+                     - "arn:aws:s3:::sunwize-iot"
+                     - "arn:aws:s3:::sunwize-iot/*"
+                -
+                  Action:
+                     - "iotanalytics:SampleChannelData"
+                  Effect: "Allow"
+                  Resource:
+                     - "*"
+    LambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - appsync.amazonaws.com
+            Action:
+            - sts:AssumeRole
+
+    AppSyncLambdaInvokePolicy:
+      Type: AWS::IAM::Policy
+      Properties:
+        PolicyName: AppSyncLambdaInvokePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - lambda:*
+            Resource: "*"
+        Roles:
+        - !Ref LambdaRole
+
+    LambdaSecurityGroup: 
+      Type: AWS::EC2::SecurityGroup
+      Properties: 
+        GroupDescription: "Security Group For The Bwa Console Lambda Function"
+
+    LambdaFunction:
+      Type: AWS::Lambda::Function
+      Properties:
+        Code: 
+          S3Bucket: !Ref LambdaS3Bucket
+          S3Key: !Ref LambdaS3Key
+        Runtime: nodejs8.10
+        Timeout: 16
+        Role: !GetAtt LambdaExecutionRole.Arn
+        Handler: index.lambda_handler
+        MemorySize: 128
+
+    LambdaLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: !Join ['/', ['/aws/lambda', !Ref LambdaFunction ]]
+        RetentionInDays: 1
+
+ ####################################################
+ # Define the resources used to host the React app. #
+ ####################################################
+
+    HostingBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: !Ref 'FullDomainName'
+        AccessControl: PublicRead
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: index.html
+      DeletionPolicy: Delete
+    HostingBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref HostingBucket
+        PolicyDocument:
+          Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Join ['', ['arn:aws:s3:::', !Ref 'HostingBucket', /*]]
+    CloudFrontDistribution:
+      Type: AWS::CloudFront::Distribution
+      DependsOn:
+      - HostingBucket
+      Properties:
+        DistributionConfig:
+          Comment: Cloudfront Distribution pointing to S3 bucket
+          Origins:
+          - DomainName: !Select [2, !Split ["/", !GetAtt HostingBucket.WebsiteURL]]
+            Id: S3Origin
+            CustomOriginConfig:
+              HTTPPort: '80'
+              HTTPSPort: '443'
+              OriginProtocolPolicy: http-only
+          Enabled: true
+          HttpVersion: 'http2'
+          DefaultRootObject: index.html
+          Aliases:
+          - !Ref FullDomainName
+          DefaultCacheBehavior:
+            AllowedMethods:
+            - GET
+            - HEAD
+            Compress: true
+            TargetOriginId: S3Origin
+            ForwardedValues:
+              QueryString: true
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+          PriceClass: PriceClass_All
+          ViewerCertificate:
+            AcmCertificateArn: !Ref AcmCertificateArn
+            SslSupportMethod: sni-only
