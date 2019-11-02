@@ -1,1 +1,0 @@
-Special thanks to garbled1 for figuring out the checksums!
