@@ -20,7 +20,7 @@ if (process.argv.length < 4) {
 var email = process.argv[2];
 var action = process.argv[3];
 
-var userPoolId = 'us-west-2_SSZLAWrJ3';
+var userPoolId = 'us-west-2_aPZ0w0urX';
 
 var cognitoidentityserviceprovider = new aws.CognitoIdentityServiceProvider({
     apiVersion: '2016-04-18'

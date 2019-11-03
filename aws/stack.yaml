@@ -94,12 +94,20 @@
       Description: "A Cognito user pool for authenticating users"
       Properties:
         UserPoolName: !Sub ${AWS::StackName}-user-pool
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 6
+            RequireLowercase: false
+            RequireNumbers: false
+            RequireSymbols: false
+            RequireUppercase: false
+            TemporaryPasswordValidityDays: 10
         AdminCreateUserConfig:
           AllowAdminCreateUserOnly: True
           InviteMessageTemplate:
             EmailMessage: !Sub |
               <p>
-              Welcome to the Bwa Console: https://${FullDomainName}
+              Welcome to the CoHo Hot Tub Console: https://${FullDomainName}
               <p>
               Your username is:
               <p>
@@ -108,14 +116,12 @@
               and your temporary 8 character password is:
               <p>
               {####}
-            EmailSubject: Bwa Console - Your temporary credentials
-            SMSMessage: To access the Bwa Console your username is {username} and temporary password is {####}.
-          UnusedAccountValidityDays: 7
+            EmailSubject: CoHo Hot Tub Console - Your temporary credentials
+            SMSMessage: To access the CoHo Hot Tub Console your username is {username} and temporary password is {####}.
         AutoVerifiedAttributes:
-          - phone_number
           - email
-        MfaConfiguration: "ON"
-        SmsAuthenticationMessage: Your authentication code for the Bwa Console is {####}
+        MfaConfiguration: "OFF"
+        SmsAuthenticationMessage: Your authentication code for the CoHo Hot Tub Console is {####}
         SmsConfiguration:
           ExternalId: !Sub ${AWS::StackName}-external
           SnsCallerArn: !GetAtt SNSRole.Arn
@@ -123,10 +129,6 @@
           - Name: email
             AttributeDataType: String
             Mutable: false
-            Required: true
-          - Name: phone_number
-            AttributeDataType: String
-            Mutable: true
             Required: true
 
     UserPoolClient:
