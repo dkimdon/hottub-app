@@ -22,24 +22,6 @@
       Description: the Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
       AllowedPattern: "arn:aws:acm:.*"
       Default: arn:aws:acm:us-east-1:660983422489:certificate/34a28389-4ac9-4ba8-ab0e-0a45db0a8f4f
-  Mappings:
-    RegionMap:
-      us-east-1:
-        S3HostedZoneId: Z3AQBSTGFYJSTF
-      us-west-1:
-        S3HostedZoneId: Z2F56UZL2M1ACD
-      us-west-2:
-        S3HostedZoneId: Z3BJ6K6RIION7M
-      eu-west-1:
-        S3HostedZoneId: Z1BKCTXD74EZPE
-      ap-southeast-1:
-        S3HostedZoneId: Z3O0J2DXBE1FTB
-      ap-southeast-2:
-        S3HostedZoneId: Z1WCIGYICN2BYD
-      ap-northeast-1:
-        S3HostedZoneId: Z2M4EHUR26P7ZW
-      sa-east-1:
-        S3HostedZoneId: Z31GFT0UA1I2H
 
   Resources:
 
@@ -152,23 +134,13 @@
           schema {
            query: Query
           }
-          type pingResponse {
-           id: String
-          }
-          type sampleChannelDataResponse {
-           thingName: String
-           ts: Int
-           batteryVoltage: Float
-          }
-          type metricsElement {
-           thingName: String!
-           ts: Int!
-           batteryVoltage: Float
+          type tubState {
+           lastReportedTemperature: Float
+           lastReportTimestamp: Int
+           targetTemperature: Float
           }
           type Query {
-           ping(id: String): pingResponse
-           sampleChannelData(thingName: String): sampleChannelDataResponse
-           getMetrics(thingNames: [String!]!, startTs: Int!, endTs: Int!): [metricsElement]!
+           getTubState(id: String): tubState
           }
         ApiId: !GetAtt BwaGraphQLApi.ApiId
 
@@ -187,66 +159,22 @@
 # The resolvers define the interface between the GraphQL API and the Datasources.
 # More information on resolver mapping syntax:
 # https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference.html
-    PingResolver:
-      Type: AWS::AppSync::Resolver
-      DependsOn:
-      - BwaGraphQLSchema
-      Properties:
-        ApiId: !GetAtt BwaGraphQLApi.ApiId
-        TypeName: Query
-        FieldName: ping 
-        DataSourceName: !GetAtt LambdaDataSource.Name
-        RequestMappingTemplate: |
-          {
-            "version": "2017-02-28",
-            "operation": "Invoke",
-            "payload": {
-              "field": "ping",
-              "arguments": $utils.toJson($context.arguments)
-            }
-          }
-        ResponseMappingTemplate: |
-          $util.toJson($ctx.result)
 
-    SampleChannelDataResolver:
+    GetTubStateResolver:
       Type: AWS::AppSync::Resolver
       DependsOn:
       - BwaGraphQLSchema
       Properties:
         ApiId: !GetAtt BwaGraphQLApi.ApiId
         TypeName: Query
-        FieldName: sampleChannelData
+        FieldName: getTubState
         DataSourceName: !GetAtt LambdaDataSource.Name
         RequestMappingTemplate: |
           {
             "version": "2017-02-28",
             "operation": "Invoke",
             "payload": {
-              "field": "sample-channel-data",
-              "arguments": $utils.toJson($context.arguments),
-              "identity": {
-                "username" : $utils.toJson($context.identity.username)
-              }
-            }
-          }
-        ResponseMappingTemplate: |
-          $util.toJson($ctx.result)
-
-    GetMetricsResolver:
-      Type: AWS::AppSync::Resolver
-      DependsOn:
-      - BwaGraphQLSchema
-      Properties:
-        ApiId: !GetAtt BwaGraphQLApi.ApiId
-        TypeName: Query
-        FieldName: getMetrics
-        DataSourceName: !GetAtt LambdaDataSource.Name
-        RequestMappingTemplate: |
-          {
-            "version": "2017-02-28",
-            "operation": "Invoke",
-            "payload": {
-              "field": "get-metrics",
+              "field": "get-tub-state",
               "arguments": $utils.toJson($context.arguments),
               "identity": {
                 "username" : $utils.toJson($context.identity.username)
