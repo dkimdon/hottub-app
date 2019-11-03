@@ -8,6 +8,9 @@
     LambdaS3Key:
       Type: String
       Default: api/devel/bwa-console-lambda-1572728908.zip
+    HostingBucketName:
+      Type: String
+      Default: hottub-cohoecovillage-org
     FullDomainName:
       Type: String
       Description: The full domain name e.g. app.example.com
@@ -381,7 +384,7 @@
     HostingBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: !Ref 'FullDomainName'
+        BucketName: !Ref HostingBucketName
         AccessControl: PublicRead
         WebsiteConfiguration:
           IndexDocument: index.html
