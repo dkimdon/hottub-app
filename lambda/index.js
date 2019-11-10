@@ -52,7 +52,7 @@ exports.lambda_handler = function(event, context, callback) {
         if (!targetTemperature) {
             desired.heating_mode = 'rest';
             desired.temperature_range = 'low';
-            desired.set_temperature = 55;
+            desired.set_temperature = 50;
         } else {
             // # 50 - 80
             if (targetTemperature > 50 && targetTemperature <= 80) {
