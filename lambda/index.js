@@ -44,7 +44,7 @@ exports.lambda_handler = function(event, context, callback) {
         var {
             targetTemperature
         } = event.arguments;
-        if (typeof targetTemperature != 'number') {
+        if (targetTemperature != null && typeof targetTemperature != 'number') {
             return callback('targetTemperature must be a number');
         }
         var desired = {};
@@ -92,6 +92,7 @@ exports.lambda_handler = function(event, context, callback) {
     }
 }
 
+/*
 var args = process.argv.slice(2);
 
 if (args[0] == 'get') {
@@ -104,10 +105,11 @@ if (args[0] == 'get') {
     exports.lambda_handler({
         field: 'set-tub-state',
         arguments: {
-            targetTemperature: parseInt(args[1])
+            targetTemperature: args[1] ? parseInt(args[1]) : null
         }
     }, null, function(err, res) {
         console.log(err);
         console.log(JSON.stringify(res, null, 4));
     });
 }
+*/
