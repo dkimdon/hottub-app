@@ -7,7 +7,7 @@
       Default: coho-bwa-console
     LambdaS3Key:
       Type: String
-      Default: api/devel/bwa-console-lambda-1573354987.zip
+      Default: api/devel/bwa-console-lambda-1573401611.zip
     HostingBucketName:
       Type: String
       Default: hottub-cohoecovillage-org

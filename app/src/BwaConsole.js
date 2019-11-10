@@ -56,8 +56,16 @@ class BwaConsole extends React.Component {
 
   render() {
     return (
-      <div><pre>{JSON.stringify(this.state, null, 4)}
-      </pre></div>
+      <div>
+        <pre>
+          {JSON.stringify(this.state, null, 4)}
+        </pre>
+        <ul>
+          <li>The last reported water temperature is {this.state.lastReportedTemperature}F.</li>
+          <li>The report is {Math.floor(Date.now() / 1000) - this.state.lastReportTimestamp} seconds old.</li>
+          <li>The current desired temperature for the tub is {this.state.targetTemperature}F.</li>
+        </ul>
+      </div>
     );
   }
 }
