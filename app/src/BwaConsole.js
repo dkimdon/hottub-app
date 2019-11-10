@@ -5,7 +5,12 @@ import { API, graphqlOperation } from "aws-amplify";
 
 import { withRouter } from "react-router-dom";
 import {RadioGroup, Radio} from 'react-radio-group';
-
+/*
+  TODO:
+    - Use minutes instead of seconds.
+    - When tub is off text says that desiref temp if 'offF'
+    - A pretty thermometer?
+*/
 class BwaConsole extends React.Component {
   constructor(props) {
     super(props);
