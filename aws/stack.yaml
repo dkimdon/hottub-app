@@ -140,7 +140,8 @@
            targetTemperature: Float
           }
           type Query {
-           getTubState(id: String): tubState
+           getTubState: tubState
+           setTubState(targetTemperature: Float): tubState
           }
         ApiId: !GetAtt BwaGraphQLApi.ApiId
 
@@ -175,6 +176,29 @@
             "operation": "Invoke",
             "payload": {
               "field": "get-tub-state",
+              "identity": {
+                "username" : $utils.toJson($context.identity.username)
+              }
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
+    SetTubStateResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Query
+        FieldName: setTubState
+        DataSourceName: !GetAtt LambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "set-tub-state",
               "arguments": $utils.toJson($context.arguments),
               "identity": {
                 "username" : $utils.toJson($context.identity.username)
@@ -239,21 +263,8 @@
                   Resource: "arn:aws:logs:*:*:*"
                 -
                   Action:
-                     - "s3:ListAllMyBuckets"
-                     - "s3:GetBucketLocation"
-                  Effect: "Allow"
-                  Resource:
-                     - "*"
-                -
-                  Action:
-                     - "s3:*"
-                  Effect: "Allow"
-                  Resource:
-                     - "arn:aws:s3:::sunwize-iot"
-                     - "arn:aws:s3:::sunwize-iot/*"
-                -
-                  Action:
-                     - "iotanalytics:SampleChannelData"
+                     - "iot:GetThingShadow" 
+                     - "iot:UpdateThingShadow" 
                   Effect: "Allow"
                   Resource:
                      - "*"
