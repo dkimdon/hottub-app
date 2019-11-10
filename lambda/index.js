@@ -23,12 +23,12 @@ exports.lambda_handler = function(event, context, callback) {
             } else {
                 var shadow = JSON.parse(data.payload);
                 var {
-                    timestamp,
                     temperature,
                     set_temperature,
                     heating_mode,
                     temperature_range
                 } = shadow.state.reported;
+                var timestamp = shadow.metadata.reported.temperature.timestamp;
                 var state = {
                     lastReportedTemperature: temperature,
                     lastReportTimestamp: timestamp,
