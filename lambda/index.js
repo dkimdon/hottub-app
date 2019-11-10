@@ -44,7 +44,6 @@ exports.lambda_handler = function(event, context, callback) {
         var {
             targetTemperature
         } = event.arguments;
-
         if (typeof targetTemperature != 'number') {
             return callback('targetTemperature must be a number');
         }
@@ -78,13 +77,20 @@ exports.lambda_handler = function(event, context, callback) {
                 console.log('Error : ' + err, err.stack);
                 return callback(err);
             } else {
-                return callback(null, JSON.parse(data.payload));
+                var shadow = JSON.parse(data.payload);
+                var {
+                    set_temperature,
+                    heating_mode,
+                    temperature_range
+                } = shadow.state.desired;
+                var state = {
+                    targetTemperature: heating_mode == 'ready' ? shadow.state.desired.set_temperature : null
+                };
+                return callback(null, state);
             }
         });
     }
 }
-
-/*
 
 var args = process.argv.slice(2);
 
@@ -105,5 +111,3 @@ if (args[0] == 'get') {
         console.log(JSON.stringify(res, null, 4));
     });
 }
-
-*/

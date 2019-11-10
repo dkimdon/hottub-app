@@ -12,4 +12,13 @@ export const getTubState = `query GetTubState {
   }
 }
 `;
+export const setTubState = `query SetTubState($targetTemperature: Float) {
+  setTubState(targetTemperature: $targetTemperature) {
+    lastReportedTemperature
+    lastReportTimestamp
+    targetTemperature
+  }
+}
+`;
+
 
