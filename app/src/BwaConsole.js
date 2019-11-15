@@ -4,13 +4,8 @@ import * as queries from "./graphql/queries";
 import { API, graphqlOperation } from "aws-amplify";
 
 import { withRouter } from "react-router-dom";
-import {RadioGroup, Radio} from 'react-radio-group';
-/*
-  TODO:
-    - Use minutes instead of seconds.
-    - When tub is off text says that desiref temp if 'offF'
-    - A pretty thermometer?
-*/
+import { RadioGroup, Radio } from "react-radio-group";
+
 class BwaConsole extends React.Component {
   constructor(props) {
     super(props);
@@ -28,35 +23,49 @@ class BwaConsole extends React.Component {
       this.setState({
         lastReportedTemperature: res.data.getTubState.lastReportedTemperature,
         lastReportTimestamp: res.data.getTubState.lastReportTimestamp,
-        targetTemperature: res.data.getTubState.targetTemperature.toString()
+        targetTemperature: res.data.getTubState.targetTemperature.toString(),
+        stateDescription:
+          "The tub is set to heat to or maintain a temperature of " +
+          res.data.getTubState.targetTemperature.toString() +
+          "F"
       });
     } else {
       this.setState({
-        targetTemperature: 'off'
+        lastReportedTemperature: res.data.getTubState.lastReportedTemperature,
+        lastReportTimestamp: res.data.getTubState.lastReportTimestamp,
+        targetTemperature: "off",
+        stateDescription: "The tub is at rest."
       });
     }
   }
   async setTubState(targetTemperature) {
     var res;
-    if (targetTemperature === 'off') {
-    	res = await API.graphql(graphqlOperation(queries.setTubState, {targetTemperature: null}));
+    if (targetTemperature === "off") {
+      res = await API.graphql(
+        graphqlOperation(queries.setTubState, {
+          targetTemperature: null
+        })
+      );
     } else {
-    	res = await API.graphql(graphqlOperation(queries.setTubState, {targetTemperature: parseInt(targetTemperature)}));
+      res = await API.graphql(
+        graphqlOperation(queries.setTubState, {
+          targetTemperature: parseInt(targetTemperature)
+        })
+      );
     }
-    
+
     if (res.data.setTubState.targetTemperature) {
       this.setState({
-        targetTemperature:  res.data.setTubState.targetTemperature.toString()
+        targetTemperature: res.data.setTubState.targetTemperature.toString()
       });
     } else {
       this.setState({
-        targetTemperature: 'off'
+        targetTemperature: "off"
       });
     }
   }
   async componentDidMount() {
-    this.setState({
-    });
+    this.setState({});
 
     this.getTubState();
   }
@@ -65,22 +74,49 @@ class BwaConsole extends React.Component {
     return (
       <div>
         <ul>
-          <li>The last reported water temperature is {this.state.lastReportedTemperature}F.</li>
-          <li>The report is {Math.floor(Date.now() / 1000) - this.state.lastReportTimestamp} seconds old.</li>
-          <li>The current desired temperature for the tub is {this.state.targetTemperature}F.</li>
+          <li>
+            The last reported water temperature is
+            {this.state.lastReportedTemperature}
+            F.
+          </li>
+          <li>
+            {"The report is " +
+              (Math.floor(Date.now() / 1000) - this.state.lastReportTimestamp) +
+              " seconds old."}
+          </li>
+          <li> {this.state.stateDescription} </li>
         </ul>
         Control tub desired state below:
-        <RadioGroup name="desiredTemperature" selectedValue={this.state.targetTemperature} onChange={this.setTubState}>
+        <RadioGroup
+          name="desiredTemperature"
+          selectedValue={this.state.targetTemperature}
+          onChange={this.setTubState}
+        >
           <ul>
-        
-          <li><Radio value="off" />off</li>
-          <li><Radio value="106" />106</li>
-          <li><Radio value="105" />105</li>
-          <li><Radio value="104" />104</li>
-          <li><Radio value="103" />103</li>
-          <li><Radio value="102" />102</li>
-          <li><Radio value="101" />101</li>
-          <li><Radio value="100" />100</li>
+            <li>
+              <Radio value="off" /> rest
+            </li>
+            <li>
+              <Radio value="106" /> 106
+            </li>
+            <li>
+              <Radio value="105" /> 105
+            </li>
+            <li>
+              <Radio value="104" /> 104
+            </li>
+            <li>
+              <Radio value="103" /> 103
+            </li>
+            <li>
+              <Radio value="102" /> 102
+            </li>
+            <li>
+              <Radio value="101" /> 101
+            </li>
+            <li>
+              <Radio value="100" /> 100
+            </li>
           </ul>
         </RadioGroup>
       </div>
