@@ -83,7 +83,7 @@
             RequireNumbers: false
             RequireSymbols: false
             RequireUppercase: false
-            TemporaryPasswordValidityDays: 10
+            TemporaryPasswordValidityDays: 35
         AdminCreateUserConfig:
           AllowAdminCreateUserOnly: True
           InviteMessageTemplate:
@@ -95,7 +95,7 @@
               <p>
               {username}
               <p>
-              and your temporary 8 character password is:
+              and your temporary password is:
               <p>
               {####}
             EmailSubject: CoHo Hot Tub Console - Your temporary credentials
