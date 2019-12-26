@@ -83,7 +83,6 @@ describe('Schedule DAO', () => {
                     delete record.id
                 });
                 assert.deepStrictEqual(res, records.slice(1, 4));
-                sd.close();
                 done();
             });
         });
