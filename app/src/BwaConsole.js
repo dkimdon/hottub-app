@@ -23,16 +23,18 @@ class BwaConsole extends React.Component {
       this.setState({
         lastReportedTemperature: res.data.getTubState.lastReportedTemperature,
         lastReportTimestamp: res.data.getTubState.lastReportTimestamp,
+        lastSeenTimestamp: res.data.getTubState.lastSeenTimestamp,
         targetTemperature: res.data.getTubState.targetTemperature.toString(),
         stateDescription:
           "The tub is set to heat to or maintain a temperature of " +
           res.data.getTubState.targetTemperature.toString() +
-          "F"
+          " °F"
       });
     } else {
       this.setState({
         lastReportedTemperature: res.data.getTubState.lastReportedTemperature,
         lastReportTimestamp: res.data.getTubState.lastReportTimestamp,
+        lastSeenTimestamp: res.data.getTubState.lastSeenTimestamp,
         targetTemperature: "off",
         stateDescription: "The tub is at rest."
       });
@@ -71,13 +73,18 @@ class BwaConsole extends React.Component {
   }
 
   render() {
+
+    if (!this.state.stateDescription) {
+        return (<div></div>);
+    }
     return (
       <div>
         <ul>
           <li>
-            The last reported water temperature is
-            {this.state.lastReportedTemperature}
-            F.
+            {"The last communication with the tub occurred " + (Math.floor(Date.now() / 1000) - this.state.lastSeenTimestamp) + " seconds ago."}
+          </li>
+          <li>
+            {"The last reported water temperature is " + this.state.lastReportedTemperature +" °F."}
           </li>
           <li>
             {"The report is " +

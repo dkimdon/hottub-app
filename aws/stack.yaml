@@ -7,7 +7,7 @@
       Default: coho-bwa-console
     LambdaS3Key:
       Type: String
-      Default: api/devel/bwa-console-lambda-1577120161.zip
+      Default: api/devel/bwa-console-lambda-1578377982.zip
     HostingBucketName:
       Type: String
       Default: hottub-cohoecovillage-org
@@ -137,6 +137,7 @@
           type tubState {
            lastReportedTemperature: Float
            lastReportTimestamp: Int
+           lastSeenTimestamp: Int
            targetTemperature: Float
           }
           type Query {
