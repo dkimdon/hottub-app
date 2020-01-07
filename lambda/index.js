@@ -24,7 +24,8 @@ exports.lambda_handler = function(event, context, callback) {
                 var shadow = JSON.parse(data.payload);
                 var {
                     temperature,
-                    temperature_timestamp
+                    temperature_timestamp,
+                    last_seen_timestamp
                 } = shadow.state.reported;
                 var {
                     set_temperature,
@@ -34,6 +35,7 @@ exports.lambda_handler = function(event, context, callback) {
                 var state = {
                     lastReportedTemperature: temperature,
                     lastReportTimestamp: temperature_timestamp,
+                    lastSeenTimestamp: last_seen_timestamp,
                     targetTemperature: heating_mode == 'ready' ? shadow.state.desired.set_temperature : null
                 };
                 return callback(null, state);
@@ -93,7 +95,6 @@ exports.lambda_handler = function(event, context, callback) {
         });
     }
 }
-
 /*
 var args = process.argv.slice(2);
 
