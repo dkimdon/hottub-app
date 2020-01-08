@@ -22,6 +22,15 @@
       Description: the Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
       AllowedPattern: "arn:aws:acm:.*"
       Default: arn:aws:acm:us-east-1:660983422489:certificate/34a28389-4ac9-4ba8-ab0e-0a45db0a8f4f
+    MysqlHost:
+      Type: String
+      Default: 172.31.29.131
+    VpcId:
+      Type: AWS::EC2::VPC::Id
+      Default: vpc-7cece505
+    SubnetId:
+      Type: AWS::EC2::Subnet::Id
+      Default: subnet-5789eb2e
 
   Resources:
 
@@ -140,9 +149,19 @@
            lastSeenTimestamp: Int
            targetTemperature: Float
           }
+          type schedule {
+           id: Int
+           email: String
+           temperature: Int
+           start: Int
+           end: Int
+          }
           type Query {
            getTubState: tubState
            setTubState(targetTemperature: Float): tubState
+           getSchedules(startRangeBegin: Int!, startRangEnd: Int!): [schedule]
+           createSchedule(email: String!, temperature: Int!, start: Int!, end: Int!): schedule
+           updateSchedule(id: Int!, email: String!, temperature: Int!, start: Int!, end: Int!): schedule
           }
         ApiId: !GetAtt BwaGraphQLApi.ApiId
 
@@ -209,6 +228,78 @@
         ResponseMappingTemplate: |
           $util.toJson($ctx.result)
 
+    getSchedulesResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Query
+        FieldName: getSchedules
+        DataSourceName: !GetAtt LambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "get-schedules",
+              "arguments": $utils.toJson($context.arguments),
+              "identity": {
+                "username" : $utils.toJson($context.identity.username)
+              }
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
+    createScheduleResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Query
+        FieldName: createSchedule
+        DataSourceName: !GetAtt LambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "create-schedule",
+              "arguments": $utils.toJson($context.arguments),
+              "identity": {
+                "username" : $utils.toJson($context.identity.username)
+              }
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
+    updateScheduleResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Query
+        FieldName: updateSchedule
+        DataSourceName: !GetAtt LambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "update-schedule",
+              "arguments": $utils.toJson($context.arguments),
+              "identity": {
+                "username" : $utils.toJson($context.identity.username)
+              }
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
     AppSyncLoggingRole:
       Type: AWS::IAM::Role
       Properties: 
@@ -257,6 +348,13 @@
             PolicyDocument: 
               Version: "2012-10-17"
               Statement: 
+                - Effect: Allow
+                  Action:
+                     - 'ec2:CreateNetworkInterface'
+                     - 'ec2:DescribeNetworkInterfaces'
+                     - 'ec2:DeleteNetworkInterface'
+                  Resource:
+                     - '*'
                 - 
                   Action: 
                      - "logs:*"
@@ -300,6 +398,7 @@
       Type: AWS::EC2::SecurityGroup
       Properties: 
         GroupDescription: "Security Group For The Bwa Console Lambda Function"
+        VpcId: !Ref VpcId
 
     LambdaFunction:
       Type: AWS::Lambda::Function
@@ -312,6 +411,27 @@
         Role: !GetAtt LambdaExecutionRole.Arn
         Handler: index.lambda_handler
         MemorySize: 128
+        Environment:
+          Variables:
+            MYSQL_HOST: !Ref MysqlHost
+            MYSQL_PORT: 3306
+            MYSQL_USER: bwa
+            MYSQL_PASS: l1k3h0tw5t3R!
+            MYSQL_DATABASE: hottub
+        VpcConfig:
+          SecurityGroupIds:
+            - !Ref LambdaSecurityGroup
+          SubnetIds:
+            - !Ref SubnetId
+
+    MysqlSecurityGroupIngress:
+       Type: AWS::EC2::SecurityGroupIngress
+       Properties:
+         IpProtocol: tcp
+         GroupId: sg-0c9f729423bb744c2
+         SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
+         FromPort: '3306'
+         ToPort: '3306'
 
     LambdaLogGroup:
       Type: AWS::Logs::LogGroup
