@@ -72,6 +72,30 @@ class BwaConsole extends React.Component {
     this.getTubState();
   }
 
+  seconds_format(secs) {
+    var hours = Math.floor(secs / 60 / 60);
+    var minutes = Math.floor(secs / 60);
+    if (hours !== 0) {
+      if (hours === 1) {
+        return hours + ' hour';
+      } else {
+        return hours + ' hours';
+      }
+    }
+    if (minutes !== 0) {
+      if (minutes === 1) {
+        return minutes + ' minute';
+      } else {
+        return minutes + ' minutes';
+      }
+    }
+    if (secs === 1) {
+      return secs + ' second';
+    } else {
+      return secs + ' seconds';
+    }
+  }
+
   render() {
 
     if (!this.state.stateDescription) {
@@ -81,15 +105,13 @@ class BwaConsole extends React.Component {
       <div>
         <ul>
           <li>
-            {"The last communication with the tub occurred " + (Math.floor(Date.now() / 1000) - this.state.lastSeenTimestamp) + " seconds ago."}
+            { this.seconds_format((Math.floor(Date.now() / 1000) - this.state.lastReportTimestamp)) +
+              " ago the water temperature was " +
+              this.state.lastReportedTemperature +" °F."}
           </li>
           <li>
-            {"The last reported water temperature is " + this.state.lastReportedTemperature +" °F."}
-          </li>
-          <li>
-            {"The report is " +
-              (Math.floor(Date.now() / 1000) - this.state.lastReportTimestamp) +
-              " seconds old."}
+            {"The last communication with the tub occurred " +
+              this.seconds_format((Math.floor(Date.now() / 1000) - this.state.lastSeenTimestamp) ) + " ago."}
           </li>
           <li> {this.state.stateDescription} </li>
         </ul>
@@ -100,9 +122,6 @@ class BwaConsole extends React.Component {
           onChange={this.setTubState}
         >
           <ul>
-            <li>
-              <Radio value="off" /> rest
-            </li>
             <li>
               <Radio value="106" /> 106
             </li>
@@ -119,10 +138,7 @@ class BwaConsole extends React.Component {
               <Radio value="102" /> 102
             </li>
             <li>
-              <Radio value="101" /> 101
-            </li>
-            <li>
-              <Radio value="100" /> 100
+              <Radio value="off" /> rest
             </li>
           </ul>
         </RadioGroup>
