@@ -116,6 +116,44 @@ class BwaConsole extends React.Component {
           <li> {this.state.stateDescription} </li>
         </ul>
         Control tub desired state below:
+        <div class="radio-toolbar">
+
+        <div class="six-button">
+        <input type="radio" id="106" name="106" value="106" checked>
+        </input>
+        <label for="106">106</label>
+        </div>
+
+        <div class="five-button">
+        <input type="radio" id="105" name="105" value="105" checked>
+        </input>
+        <label for="105">105</label>
+        </div>
+
+        <div class="four-button">
+        <input type="radio" id="104" name="104" value="104" checked>
+        </input>
+        <label for="104">104</label>
+        </div>
+
+        <div class="three-button">
+        <input type="radio" id="103" name="103" value="103" checked>
+        </input>
+        <label for="103">103</label>
+        </div>
+
+        <div class="two-button">
+        <input type="radio" id="102" name="102" value="102" checked>
+        </input>
+        <label for="102">102</label>
+        </div>
+
+        <div class="off-button">
+        <input type="radio" id="off" name="off" value="off" checked>
+        </input>
+        <label for="off">off</label>
+        </div>
+
         <RadioGroup
           name="desiredTemperature"
           selectedValue={this.state.targetTemperature}
@@ -142,6 +180,7 @@ class BwaConsole extends React.Component {
             </li>
           </ul>
         </RadioGroup>
+        </div>
       </div>
     );
   }
