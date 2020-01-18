@@ -22,6 +22,12 @@
       Description: the Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
       AllowedPattern: "arn:aws:acm:.*"
       Default: arn:aws:acm:us-east-1:660983422489:certificate/34a28389-4ac9-4ba8-ab0e-0a45db0a8f4f
+    VpcId:
+      Type: AWS::EC2::VPC::Id
+      Default: vpc-7cece505
+    SubnetId:
+      Type: AWS::EC2::Subnet::Id
+      Default: subnet-5789eb2e
 
   Resources:
 
@@ -251,6 +257,8 @@
               Action: 
                 - "sts:AssumeRole"
         Path: "/"
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
         Policies: 
           - 
             PolicyName: "LambdaAccess"
@@ -300,6 +308,12 @@
       Type: AWS::EC2::SecurityGroup
       Properties: 
         GroupDescription: "Security Group For The Bwa Console Lambda Function"
+        VpcId: !Ref VpcId
+        SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
 
     LambdaFunction:
       Type: AWS::Lambda::Function
@@ -312,6 +326,20 @@
         Role: !GetAtt LambdaExecutionRole.Arn
         Handler: index.lambda_handler
         MemorySize: 128
+        VpcConfig:
+          SecurityGroupIds:
+            - !Ref LambdaSecurityGroup
+          SubnetIds:
+            - !Ref SubnetId
+
+    MysqlSecurityGroupIngress:
+       Type: AWS::EC2::SecurityGroupIngress
+       Properties:
+         IpProtocol: tcp
+         GroupId: sg-0c9f729423bb744c2
+         SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
+         FromPort: '3306'
+         ToPort: '3306'
 
     LambdaLogGroup:
       Type: AWS::Logs::LogGroup
