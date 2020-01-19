@@ -102,22 +102,43 @@ class BwaConsole extends React.Component {
     if (!this.state.stateDescription) {
         return (<div></div>);
     }
+    var statusLines = [];
+    statusLines.push(
+        <li>
+        {
+        "The water temperature was last measured " +
+        this.seconds_format((Math.floor(Date.now() / 1000) - this.state.lastReportTimestamp)) +
+        " ago."
+        }
+        </li>
+    );
+    statusLines.push(
+        <li>
+        {
+        this.state.stateDescription
+        }
+        </li>
+    );
+
+    if (Math.floor(Date.now() / 1000) - this.state.lastSeenTimestamp > 60 * 30) {
+        statusLines.push(
+            <li>
+            <font color="red">
+            {
+            "Warning: The last communication with the tub occurred " +
+            this.seconds_format((Math.floor(Date.now() / 1000) - this.state.lastSeenTimestamp) ) +
+            " ago."}
+            </font>
+            </li>
+        );
+    }
     return (
       <div>
         <table>
         <tr>
         <td>
         <ul>
-          <li>
-            { this.seconds_format((Math.floor(Date.now() / 1000) - this.state.lastReportTimestamp)) +
-              " ago the water temperature was " +
-              this.state.lastReportedTemperature +" °F."}
-          </li>
-          <li>
-            {"The last communication with the tub occurred " +
-              this.seconds_format((Math.floor(Date.now() / 1000) - this.state.lastSeenTimestamp) ) + " ago."}
-          </li>
-          <li> {this.state.stateDescription} </li>
+          {statusLines}
         </ul>
         </td>
         <td>
