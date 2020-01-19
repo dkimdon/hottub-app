@@ -5,6 +5,7 @@ import { API, graphqlOperation } from "aws-amplify";
 
 import { withRouter } from "react-router-dom";
 import { RadioGroup, Radio } from "react-radio-group";
+import  Thermometer from "react-ui-thermometer";
 
 class BwaConsole extends React.Component {
   constructor(props) {
@@ -103,6 +104,9 @@ class BwaConsole extends React.Component {
     }
     return (
       <div>
+        <table>
+        <tr>
+        <td>
         <ul>
           <li>
             { this.seconds_format((Math.floor(Date.now() / 1000) - this.state.lastReportTimestamp)) +
@@ -115,6 +119,12 @@ class BwaConsole extends React.Component {
           </li>
           <li> {this.state.stateDescription} </li>
         </ul>
+        </td>
+        <td>
+        <Thermometer theme={'light'} value={this.state.lastReportedTemperature} format={{label:'°F', insertAfter: true}} steps={5} min={60} max={110} size={'large'} height={180} />
+        </td>
+        </tr>
+        </table>
         Control tub desired state below:
         <RadioGroup
           name="desiredTemperature"

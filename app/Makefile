@@ -1,14 +1,15 @@
 debug: node_modules
 	npm start
 
-node_modules:
+install:
+	(cd ../react-ui-thermometer/ && npm install && ./node_modules/webpack-cli/bin/cli.js)
 	npm install
 
 test:
 	npm test
 
 clean:
-	rm -rf build
+	rm -rf build node_modules
 
 deploy:
 	npm run production:build
