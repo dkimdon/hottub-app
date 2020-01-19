@@ -1,0 +1,3 @@
+[submodule "react-ui-thermometer"]
+	path = react-ui-thermometer
+	url = git@github.com:dkimdon/react-ui-thermometer.git
