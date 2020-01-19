@@ -1,5 +1,5 @@
 {
-  "name": "hotub-mysql-dao",
+  "name": "hottub-mysql-dao",
   "version": "0.0.1",
   "description": "NodeJS support for the CoHo Hottub schedule MySQL tables",
   "main": "index.js",
