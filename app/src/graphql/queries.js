@@ -22,5 +22,39 @@ export const setTubState = `query SetTubState($targetTemperature: Float) {
   }
 }
 `;
-
-
+export const getSchedules = `query GetSchedules($startRangeBegin: Int!, $startRangeEnd: Int!) {
+  getSchedules(startRangeBegin: $startRangeBegin, startRangeEnd: $startRangeEnd) {
+     id
+     email
+     temperature
+     start
+     end
+  }
+}
+`;
+export const createSchedule = `query CreateSchedule($temperature: Int!, $start: Int!, $end:Int!) {
+  createSchedule(temperature: $temperature, start: $start, end: $end) {
+     id
+     email
+     temperature
+     start
+     end
+  }
+}
+`;
+export const updateSchedule = `query UpdateSchedule($id: Int!, $temperature: Int!, $start: Int!, $end:Int!) {
+  updateSchedule(id: $id, temperature: $temperature, start: $start, end: $end) {
+     id
+     email
+     temperature
+     start
+     end
+  }
+}
+`;
+export const deleteSchedule = `query DeleteSchedule($id: Int!) {
+  deleteSchedule(id: $id) {
+     id
+  }
+}
+`;

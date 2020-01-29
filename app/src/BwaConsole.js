@@ -20,6 +20,12 @@ class BwaConsole extends React.Component {
   }
   async getTubState() {
     var res = await API.graphql(graphqlOperation(queries.getTubState, {}));
+    var schedules = await API.graphql(
+        graphqlOperation(queries.getSchedules, {
+          startRangeBegin: 0,
+          startRangeEnd: 1600000000
+        })
+    );
     if (res.data.getTubState.targetTemperature) {
       this.setState({
         lastReportedTemperature: res.data.getTubState.lastReportedTemperature,
@@ -29,7 +35,8 @@ class BwaConsole extends React.Component {
         stateDescription:
           "The tub is set to heat to or maintain a temperature of " +
           res.data.getTubState.targetTemperature.toString() +
-          " °F"
+          " °F",
+        user: JSON.stringify(schedules.data.getSchedules[0].email)
       });
     } else {
       this.setState({
@@ -37,22 +44,40 @@ class BwaConsole extends React.Component {
         lastReportTimestamp: res.data.getTubState.lastReportTimestamp,
         lastSeenTimestamp: res.data.getTubState.lastSeenTimestamp,
         targetTemperature: "off",
-        stateDescription: "The tub is at rest."
+        stateDescription: "The tub is at rest.",
+        user: JSON.stringify(schedules.data.getSchedules[0].email)
       });
     }
   }
   async setTubState(targetTemperature) {
     var res;
+    var schedule;
     if (targetTemperature === "off") {
       res = await API.graphql(
         graphqlOperation(queries.setTubState, {
           targetTemperature: null
         })
       );
+      schedule = await API.graphql(
+        graphqlOperation(queries.updateSchedule, {
+          id: 1,
+          temperature: 0,
+          start: 0,
+          end: 0
+        })
+      );
     } else {
       res = await API.graphql(
         graphqlOperation(queries.setTubState, {
           targetTemperature: parseInt(targetTemperature)
+        })
+      );
+      schedule = await API.graphql(
+        graphqlOperation(queries.updateSchedule, {
+          id: 1,
+          temperature: parseInt(targetTemperature),
+          start: Math.round(new Date().getTime() / 1000),
+          end: Math.round(new Date().getTime() / 1000)
         })
       );
     }
@@ -116,6 +141,15 @@ class BwaConsole extends React.Component {
         <li>
         {
         this.state.stateDescription
+        }
+        </li>
+    );
+    statusLines.push(
+        <li>
+        {
+        "The last change to the tub settings was made by " +
+        this.state.user +
+        "."
         }
         </li>
     );
