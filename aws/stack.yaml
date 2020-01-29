@@ -8,6 +8,9 @@
     TubLambdaS3Key:
       Type: String
       Default: api/devel/bwa-console-lambda-1578377982.zip
+    MysqlLambdaS3Key:
+      Type: String
+      Default: api/mysql-lambda/bwa-console-mysql-lambda-1580267669.zip
     HostingBucketName:
       Type: String
       Default: hottub-cohoecovillage-org
@@ -22,6 +25,15 @@
       Description: the Amazon Resource Name (ARN) of an AWS Certificate Manager (ACM) certificate.
       AllowedPattern: "arn:aws:acm:.*"
       Default: arn:aws:acm:us-east-1:660983422489:certificate/34a28389-4ac9-4ba8-ab0e-0a45db0a8f4f
+    MysqlHost:
+      Type: String
+      Default: 172.31.29.131
+    VpcId:
+      Type: AWS::EC2::VPC::Id
+      Default: vpc-7cece505
+    SubnetId:
+      Type: AWS::EC2::Subnet::Id
+      Default: subnet-5789eb2e
 
   Resources:
 
@@ -140,9 +152,20 @@
            lastSeenTimestamp: Int
            targetTemperature: Float
           }
+          type schedule {
+           id: Int
+           email: String
+           temperature: Int
+           start: Int
+           end: Int
+          }
           type Query {
            getTubState: tubState
            setTubState(targetTemperature: Float): tubState
+           getSchedules(startRangeBegin: Int!, startRangEnd: Int!): [schedule]
+           createSchedule(temperature: Int!, start: Int!, end: Int!): schedule
+           updateSchedule(id: Int!, temperature: Int!, start: Int!, end: Int!): schedule
+           deleteSchedule(id: Int!): schedule
           }
         ApiId: !GetAtt BwaGraphQLApi.ApiId
 
@@ -198,6 +221,112 @@
             "operation": "Invoke",
             "payload": {
               "field": "set-tub-state",
+              "arguments": $utils.toJson($context.arguments),
+              "identity": {
+                "username" : $utils.toJson($context.identity.username)
+              }
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
+    MysqlLambdaDataSource:
+      Type: AWS::AppSync::DataSource
+      Properties:
+        Name: MysqlLambda
+        Type: AWS_LAMBDA
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        ServiceRoleArn:  !GetAtt AppsyncLambdaRole.Arn
+        LambdaConfig:
+          LambdaFunctionArn: !GetAtt MysqlLambdaFunction.Arn
+
+    getSchedulesResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Query
+        FieldName: getSchedules
+        DataSourceName: !GetAtt MysqlLambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "get-schedules",
+              "arguments": $utils.toJson($context.arguments),
+              "identity": {
+                "username" : $utils.toJson($context.identity.username)
+              }
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
+    createScheduleResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Query
+        FieldName: createSchedule
+        DataSourceName: !GetAtt MysqlLambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "create-schedule",
+              "arguments": $utils.toJson($context.arguments),
+              "identity": {
+                "username" : $utils.toJson($context.identity.username)
+              }
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
+    updateScheduleResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Query
+        FieldName: updateSchedule
+        DataSourceName: !GetAtt MysqlLambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "update-schedule",
+              "arguments": $utils.toJson($context.arguments),
+              "identity": {
+                "username" : $utils.toJson($context.identity.username)
+              }
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
+    deleteScheduleResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Query
+        FieldName: deleteSchedule
+        DataSourceName: !GetAtt MysqlLambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "delete-schedule",
               "arguments": $utils.toJson($context.arguments),
               "identity": {
                 "username" : $utils.toJson($context.identity.username)
@@ -267,6 +396,41 @@
                   Effect: "Allow"
                   Resource:
                      - "*"
+
+
+    MysqlLambdaExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            -
+              Effect: "Allow"
+              Principal:
+                Service:
+                  - "lambda.amazonaws.com"
+              Action:
+                - "sts:AssumeRole"
+        Path: "/"
+        Policies:
+          -
+            PolicyName: "LambdaAccess"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                     - 'ec2:CreateNetworkInterface'
+                     - 'ec2:DescribeNetworkInterfaces'
+                     - 'ec2:DeleteNetworkInterface'
+                  Resource:
+                     - '*'
+                -
+                  Action:
+                     - "logs:*"
+                  Effect: "Allow"
+                  Resource: "arn:aws:logs:*:*:*"
+
     AppsyncLambdaRole:
       Type: AWS::IAM::Role
       Properties:
@@ -315,6 +479,51 @@
       Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: !Join ['/', ['/aws/lambda', !Ref TubLambdaFunction ]]
+        RetentionInDays: 1
+
+    MysqlLambdaSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: "Security Group For The Mysql Lambda Function"
+        VpcId: !Ref VpcId
+
+    MysqlLambdaFunction:
+      Type: AWS::Lambda::Function
+      Properties:
+        Code:
+          S3Bucket: !Ref LambdaS3Bucket
+          S3Key: !Ref MysqlLambdaS3Key
+        Runtime: nodejs12.x
+        Timeout: 16
+        Role: !GetAtt MysqlLambdaExecutionRole.Arn
+        Handler: index.lambda_handler
+        MemorySize: 128
+        Environment:
+          Variables:
+            MYSQL_HOST: !Ref MysqlHost
+            MYSQL_PORT: 3306
+            MYSQL_USER: bwa
+            MYSQL_PASS: l1k3h0tw5t3R!
+            MYSQL_DATABASE: hottub
+        VpcConfig:
+          SecurityGroupIds:
+            - !Ref MysqlLambdaSecurityGroup
+          SubnetIds:
+            - !Ref SubnetId
+
+    MysqlSecurityGroupIngress:
+       Type: AWS::EC2::SecurityGroupIngress
+       Properties:
+         IpProtocol: tcp
+         GroupId: sg-0c9f729423bb744c2
+         SourceSecurityGroupId: !GetAtt MysqlLambdaSecurityGroup.GroupId
+         FromPort: '3306'
+         ToPort: '3306'
+
+    MysqlLambdaLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: !Join ['/', ['/aws/lambda', !Ref MysqlLambdaFunction ]]
         RetentionInDays: 1
 
  ####################################################
