@@ -130,6 +130,27 @@ class ScheduleDao {
         });
     }
 
+    /**
+     * Delete a schedule.
+     *
+     * @param params.id - The id of the schedule to delete
+     * @param {function} callback - Function to call upon completion.  Invoked with (err).
+     */
+    del(params, callback) {
+        assert.object(params, 'params');
+        assert.number(params.id);
+        assert.func(callback, 'callback');
+
+        var sql = "DELETE FROM `schedule` WHERE id = ?";
+
+        this.connection.query(sql, [params.id], (err, results, fields) => {
+            if (err) {
+                return callback(err);
+            }
+            return callback();
+        });
+    }
+
     close() {
         this.connection.destroy();
     }
