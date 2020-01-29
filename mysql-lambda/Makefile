@@ -6,6 +6,7 @@ zip: bwa-console-mysql-lambda-$(VERSION).zip
 
 bwa-console-mysql-lambda-$(VERSION).zip: index.js
 	rm -rf node_modules
+	make -C ../hottub-mysql-dao clean
 	npm install --only=production ../hottub-mysql-dao
 	npm install --only=production
 	zip -q -r bwa-console-mysql-lambda-$(VERSION).zip lib/* node_modules/* package.json index.js

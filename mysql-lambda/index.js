@@ -22,18 +22,25 @@ exports.lambda_handler = function(event, context, callback) {
             startRangeEnd: new Date(1000 * event.arguments.startRangeEnd)
         }, (err, res) => {
             sd.close();
+            res.forEach((e) => {
+                e.start = e.start.getTime() / 1000;
+                e.end = e.end.getTime() / 1000;
+            });
             callback(err, res);
         });
     } else if (event.field == 'create-schedule') {
+        var record = {
+            temperature: event.arguments.temperature,
+            start: new Date(1000 * event.arguments.start),
+            end: new Date(1000 * event.arguments.end),
+            email: event.identity.username
+        };
         sd.create({
-            record: {
-                temperature: event.arguments.temperature,
-                start: new Date(1000 * event.arguments.start),
-                end: new Date(1000 * event.arguments.end),
-                email: event.identity.username
-            }
+            record
         }, (err, res) => {
             sd.close();
+            res.start = res.start.getTime() / 1000;
+            res.end = res.end.getTime() / 1000;
             callback(err, res);
         });
     } else if (event.field == 'update-schedule') {
@@ -47,6 +54,11 @@ exports.lambda_handler = function(event, context, callback) {
             }
         }, (err, res) => {
             sd.close();
+            if (err) {
+                return callback(err);
+            }
+            res.start = res.start.getTime() / 1000;
+            res.end = res.end.getTime() / 1000;
             callback(err, res);
         });
     } else if (event.field == 'delete-schedule') {
