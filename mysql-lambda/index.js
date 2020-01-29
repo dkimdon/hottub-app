@@ -18,25 +18,48 @@ exports.lambda_handler = function(event, context, callback) {
             startRangeEnd
         } = event.arguments;
         sd.read({
-            startRangeBegin,
-            startRangeEnd
+            startRangeBegin: new Date(1000 * event.arguments.startRangeBegin),
+            startRangeEnd: new Date(1000 * event.arguments.startRangeEnd)
         }, (err, res) => {
             sd.close();
             callback(err, res);
         });
     } else if (event.field == 'create-schedule') {
-        sd.create(event.arguments, (err, res) => {
+        sd.create({
+            record: {
+                temperature: event.arguments.temperature,
+                start: new Date(1000 * event.arguments.start),
+                end: new Date(1000 * event.arguments.end),
+                email: event.identity.username
+            }
+        }, (err, res) => {
             sd.close();
             callback(err, res);
         });
     } else if (event.field == 'update-schedule') {
-        sd.update(event.arguments, (err, res) => {
+        sd.update({
+            record: {
+                id: event.arguments.id,
+                temperature: event.arguments.temperature,
+                start: new Date(1000 * event.arguments.start),
+                end: new Date(1000 * event.arguments.end),
+                email: event.identity.username
+            }
+        }, (err, res) => {
+            sd.close();
+            callback(err, res);
+        });
+    } else if (event.field == 'delete-schedule') {
+        sd.del({
+            id: event.arguments.id
+        }, (err, res) => {
             sd.close();
             callback(err, res);
         });
     }
 }
 
+/*
 var args = process.argv.slice(2);
 
 process.env.MYSQL_HOST = "127.0.0.1";
@@ -49,38 +72,62 @@ if (args[0] == 'get') {
     exports.lambda_handler({
         field: 'get-schedules',
         arguments: {
-            startRangeBegin: new Date(parseInt(args[1])),
-            startRangeEnd: new Date(parseInt(args[2]))
+            startRangeBegin: parseInt(args[1]),
+            startRangeEnd: parseInt(args[2])
         }
     }, null, function(err, res) {
-        console.log(err);
+        if (err) {
+            console.log(err);
+        }
         console.log(JSON.stringify(res, null, 4));
     });
 } else if (args[0] == 'create') {
     exports.lambda_handler({
         field: 'create-schedule',
         arguments: {
-            email: args[1],
-            temperature: parseInt(args[2]),
-            start: new Date(args[3]),
-            end: new Date(args[4])
+            temperature: parseInt(args[1]),
+            start: parseInt(args[2]),
+            end: parseInt(args[3])
+        },
+        identity: {
+            username: 'dkimdon@gmail.com'
         }
     }, null, function(err, res) {
-        console.log(err);
+        if (err) {
+            console.log(err);
+        }
         console.log(JSON.stringify(res, null, 4));
     });
 } else if (args[0] == 'update') {
     exports.lambda_handler({
         field: 'update-schedule',
         arguments: {
-            id: args[1],
-            email: args[2],
-            temperature: parseInt(args[3]),
-            start: new Date(parseInt(args[4])),
-            end: new Date(parseInt(args[5]))
+            id: parseInt(args[1]),
+            temperature: parseInt(args[2]),
+            start: parseInt(args[3]),
+            end: parseInt(args[4])
+        },
+        identity: {
+            username: 'dkimdon@gmail.com'
         }
     }, null, function(err, res) {
-        console.log(err);
+        if (err) {
+            console.log(err);
+        }
+        console.log(JSON.stringify(res, null, 4));
+    });
+} else if (args[0] == 'delete') {
+    exports.lambda_handler({
+        field: 'delete-schedule',
+        arguments: {
+            id: parseInt(args[1])
+        }
+    }, null, function(err, res) {
+        if (err) {
+            console.log(err);
+        }
         console.log(JSON.stringify(res, null, 4));
     });
 }
+
+*/

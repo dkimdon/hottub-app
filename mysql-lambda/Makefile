@@ -1,12 +1,12 @@
 VERSION:=$(shell date +%s)
 S3BUCKET=coho-bwa-console
-S3PATH=devel
+S3PATH=mysql-lambda
 
 zip: bwa-console-mysql-lambda-$(VERSION).zip
 
 bwa-console-mysql-lambda-$(VERSION).zip: index.js
 	rm -rf node_modules
-	npm install ../hottub-mysql-dao
+	npm install --only=production ../hottub-mysql-dao
 	npm install --only=production
 	zip -q -r bwa-console-mysql-lambda-$(VERSION).zip lib/* node_modules/* package.json index.js
 
