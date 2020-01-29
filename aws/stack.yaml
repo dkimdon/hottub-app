@@ -10,7 +10,7 @@
       Default: api/devel/bwa-console-lambda-1578377982.zip
     MysqlLambdaS3Key:
       Type: String
-      Default: api/mysql-lambda/bwa-console-mysql-lambda-1580267669.zip
+      Default: api/mysql-lambda/bwa-console-mysql-lambda-1580275007.zip
     HostingBucketName:
       Type: String
       Default: hottub-cohoecovillage-org
@@ -162,7 +162,7 @@
           type Query {
            getTubState: tubState
            setTubState(targetTemperature: Float): tubState
-           getSchedules(startRangeBegin: Int!, startRangEnd: Int!): [schedule]
+           getSchedules(startRangeBegin: Int!, startRangeEnd: Int!): [schedule]
            createSchedule(temperature: Int!, start: Int!, end: Int!): schedule
            updateSchedule(id: Int!, temperature: Int!, start: Int!, end: Int!): schedule
            deleteSchedule(id: Int!): schedule
