@@ -12,5 +12,5 @@ CREATE TABLE `schedule` (
 );
 
 
-GRANT ALL PRIVILEGES ON hottub.* TO 'bwa'@'localhost' IDENTIFIED BY 'l1k3h0tw5t3r';
+GRANT ALL PRIVILEGES ON hottub.* TO 'bwa'@'localhost' IDENTIFIED BY 'l1k3h0tw5t3R!';
 

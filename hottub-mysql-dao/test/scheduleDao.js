@@ -10,7 +10,7 @@ describe('Schedule DAO', () => {
             host: 'localhost',
             port: 3306,
             user: 'bwa',
-            pass: 'l1k3h0tw5t3r',
+            pass: 'l1k3h0tw5t3R!',
             database: 'hottub',
         });
         sd.open();
@@ -30,7 +30,9 @@ describe('Schedule DAO', () => {
         };
         sd.create({
             record
-        }, (err) => {
+        }, (err, res) => {
+            delete res.id;
+            assert.deepStrictEqual(res, record);
             sd.read({
                 startRangeBegin: new Date(2020, 1, 1, 18, 0),
                 startRangeEnd: new Date(2020, 1, 1, 19, 0),
