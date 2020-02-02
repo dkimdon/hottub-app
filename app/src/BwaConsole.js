@@ -134,7 +134,7 @@ class BwaConsole extends React.Component {
     }
     var statusLines = [];
     statusLines.push(
-        <li>
+        <li key="tempLastMeasured">
         {
         "The water temperature was last measured " +
         this.seconds_format((Math.floor(Date.now() / 1000) - this.state.lastReportTimestamp)) +
@@ -143,14 +143,14 @@ class BwaConsole extends React.Component {
         </li>
     );
     statusLines.push(
-        <li>
+        <li key="stateDesc">
         {
         this.state.stateDescription
         }
         </li>
     );
     statusLines.push(
-        <li>
+        <li key="lastChangedBy">
         {
         "The last change to the tub settings was made by " +
         this.state.user +
