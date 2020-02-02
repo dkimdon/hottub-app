@@ -27,7 +27,6 @@ class BwaConsole extends React.Component {
         })
     );
     var user;
-    console.log(JSON.stringify(res.data.getTubState));
     if (res.data.getTubState.externalController) {
         user = "the old app or the buttons on the front of the tub itself";
     } else {
