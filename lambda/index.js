@@ -36,7 +36,8 @@ exports.lambda_handler = function(event, context, callback) {
                     lastReportedTemperature: temperature,
                     lastReportTimestamp: temperature_timestamp,
                     lastSeenTimestamp: last_seen_timestamp,
-                    targetTemperature: heating_mode == 'ready' ? shadow.state.desired.set_temperature : null
+                    targetTemperature: heating_mode == 'ready' ? shadow.state.desired.set_temperature : null,
+                    externalController: shadow.state.desired.external_controller
                 };
                 return callback(null, state);
             }

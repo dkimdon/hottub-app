@@ -26,6 +26,13 @@ class BwaConsole extends React.Component {
           startRangeEnd: 1600000000
         })
     );
+    var user;
+    console.log(JSON.stringify(res.data.getTubState));
+    if (res.data.getTubState.externalController) {
+        user = "the old app or the buttons on the front of the tub itself";
+    } else {
+        user = JSON.stringify(schedules.data.getSchedules[0].email)
+    }
     if (res.data.getTubState.targetTemperature) {
       this.setState({
         lastReportedTemperature: res.data.getTubState.lastReportedTemperature,
@@ -36,7 +43,7 @@ class BwaConsole extends React.Component {
           "The tub is set to heat to or maintain a temperature of " +
           res.data.getTubState.targetTemperature.toString() +
           " °F",
-        user: JSON.stringify(schedules.data.getSchedules[0].email)
+        user
       });
     } else {
       this.setState({
@@ -45,7 +52,7 @@ class BwaConsole extends React.Component {
         lastSeenTimestamp: res.data.getTubState.lastSeenTimestamp,
         targetTemperature: "off",
         stateDescription: "The tub is at rest.",
-        user: JSON.stringify(schedules.data.getSchedules[0].email)
+        user
       });
     }
   }

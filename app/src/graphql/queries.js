@@ -10,6 +10,7 @@ export const getTubState = `query GetTubState {
     lastReportTimestamp
     lastSeenTimestamp
     targetTemperature
+    externalController
   }
 }
 `;

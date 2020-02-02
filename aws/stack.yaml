@@ -7,7 +7,7 @@
       Default: coho-bwa-console
     TubLambdaS3Key:
       Type: String
-      Default: api/devel/bwa-console-lambda-1578377982.zip
+      Default: api/devel/bwa-console-lambda-1580666623.zip
     MysqlLambdaS3Key:
       Type: String
       Default: api/mysql-lambda/bwa-console-mysql-lambda-1580275007.zip
@@ -124,6 +124,10 @@
             AttributeDataType: String
             Mutable: false
             Required: true
+          - Name: name
+            AttributeDataType: String
+            Mutable: true
+            Required: false
 
     UserPoolClient:
       Type: AWS::Cognito::UserPoolClient
@@ -151,6 +155,7 @@
            lastReportTimestamp: Int
            lastSeenTimestamp: Int
            targetTemperature: Float
+           externalController: Boolean
           }
           type schedule {
            id: Int
