@@ -174,6 +174,7 @@ class BwaConsole extends React.Component {
     return (
       <div>
         <table>
+        <tbody>
         <tr>
         <td>
         <ul>
@@ -184,6 +185,7 @@ class BwaConsole extends React.Component {
         <Thermometer theme={'light'} value={this.state.lastReportedTemperature} format={{label:'°F', insertAfter: true}} steps={5} min={60} max={110} size={'large'} height={180} />
         </td>
         </tr>
+        </tbody>
         </table>
         Control tub desired state below:
         <RadioGroup
