@@ -57,14 +57,13 @@ class BwaConsole extends React.Component {
   }
   async setTubState(targetTemperature) {
     var res;
-    var schedule;
     if (targetTemperature === "off") {
       res = await API.graphql(
         graphqlOperation(queries.setTubState, {
           targetTemperature: null
         })
       );
-      schedule = await API.graphql(
+      await API.graphql(
         graphqlOperation(queries.updateSchedule, {
           id: 1,
           temperature: 0,
@@ -78,7 +77,7 @@ class BwaConsole extends React.Component {
           targetTemperature: parseInt(targetTemperature)
         })
       );
-      schedule = await API.graphql(
+      await API.graphql(
         graphqlOperation(queries.updateSchedule, {
           id: 1,
           temperature: parseInt(targetTemperature),
