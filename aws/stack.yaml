@@ -7,7 +7,7 @@
       Default: coho-bwa-console
     TubLambdaS3Key:
       Type: String
-      Default: api/devel/bwa-console-lambda-1580666623.zip
+      Default: api/devel/bwa-console-lambda-1580705309.zip
     MysqlLambdaS3Key:
       Type: String
       Default: api/mysql-lambda/bwa-console-mysql-lambda-1580275007.zip
@@ -149,6 +149,8 @@
         Definition: |
           schema {
            query: Query
+           mutation: Mutation
+           subscription: Subscription
           }
           type tubState {
            lastReportedTemperature: Float
@@ -171,6 +173,13 @@
            createSchedule(temperature: Int!, start: Int!, end: Int!): schedule
            updateSchedule(id: Int!, temperature: Int!, start: Int!, end: Int!): schedule
            deleteSchedule(id: Int!): schedule
+          }
+          type Mutation {
+           mutateTubState(targetTemperature: Float): tubState!
+          }
+          type Subscription {
+           mutatedTubState: tubState
+           @aws_subscribe(mutations: ["mutateTubState"])
           }
         ApiId: !GetAtt BwaGraphQLApi.ApiId
 
@@ -226,6 +235,30 @@
             "operation": "Invoke",
             "payload": {
               "field": "set-tub-state",
+              "arguments": $utils.toJson($context.arguments),
+              "identity": {
+                "username" : $utils.toJson($context.identity.username)
+              }
+            }
+          }
+        ResponseMappingTemplate: |
+          $util.toJson($ctx.result)
+
+    MutateTubStateResolver:
+      Type: AWS::AppSync::Resolver
+      DependsOn:
+      - BwaGraphQLSchema
+      Properties:
+        ApiId: !GetAtt BwaGraphQLApi.ApiId
+        TypeName: Mutation
+        FieldName: mutateTubState
+        DataSourceName: !GetAtt TubLambdaDataSource.Name
+        RequestMappingTemplate: |
+          {
+            "version": "2017-02-28",
+            "operation": "Invoke",
+            "payload": {
+              "field": "mutate-tub-state",
               "arguments": $utils.toJson($context.arguments),
               "identity": {
                 "username" : $utils.toJson($context.identity.username)

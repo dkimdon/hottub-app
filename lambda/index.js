@@ -42,7 +42,8 @@ exports.lambda_handler = function(event, context, callback) {
                 return callback(null, state);
             }
         });
-    } else if (event.field == 'set-tub-state') {
+    } else if (event.field == 'set-tub-state' ||
+        event.field == 'mutate-tub-state') {
         var iotData = new aws.IotData({
             endpoint: ENDPOINT
         });
@@ -82,20 +83,41 @@ exports.lambda_handler = function(event, context, callback) {
                 console.log('Error : ' + err, err.stack);
                 return callback(err);
             } else {
-                var shadow = JSON.parse(data.payload);
-                var {
-                    set_temperature,
-                    heating_mode,
-                    temperature_range
-                } = shadow.state.desired;
-                var state = {
-                    targetTemperature: heating_mode == 'ready' ? shadow.state.desired.set_temperature : null
-                };
-                return callback(null, state);
+                // TODO - refactor this get shadown call and the one above to use a function,
+                // there is a lot of copied code inhere.
+                iotData.getThingShadow({
+                    thingName: THING_NAME
+                }, function(err, data) {
+                    if (err) {
+                        console.log('Error : ' + err, err.stack);
+                        return callback(err);
+                    } else {
+                        var shadow = JSON.parse(data.payload);
+                        var {
+                            temperature,
+                            temperature_timestamp,
+                            last_seen_timestamp
+                        } = shadow.state.reported;
+                        var {
+                            set_temperature,
+                            heating_mode,
+                            temperature_range
+                        } = shadow.state.desired;
+                        var state = {
+                            lastReportedTemperature: temperature,
+                            lastReportTimestamp: temperature_timestamp,
+                            lastSeenTimestamp: last_seen_timestamp,
+                            targetTemperature: heating_mode == 'ready' ? shadow.state.desired.set_temperature : null,
+                            externalController: shadow.state.desired.external_controller
+                        };
+                        return callback(null, state);
+                    }
+                });
             }
         });
     }
 }
+
 /*
 var args = process.argv.slice(2);
 

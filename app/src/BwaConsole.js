@@ -1,6 +1,8 @@
 import React from "react";
 
 import * as queries from "./graphql/queries";
+import * as mutations from "./graphql/mutations";
+import * as subscriptions from "./graphql/subscriptions";
 import { API, graphqlOperation } from "aws-amplify";
 
 import { withRouter } from "react-router-dom";
@@ -59,7 +61,7 @@ class BwaConsole extends React.Component {
     var res;
     if (targetTemperature === "off") {
       res = await API.graphql(
-        graphqlOperation(queries.setTubState, {
+        graphqlOperation(mutations.mutateTubState, {
           targetTemperature: null
         })
       );
@@ -73,7 +75,7 @@ class BwaConsole extends React.Component {
       );
     } else {
       res = await API.graphql(
-        graphqlOperation(queries.setTubState, {
+        graphqlOperation(mutations.mutateTubState, {
           targetTemperature: parseInt(targetTemperature)
         })
       );
@@ -87,9 +89,9 @@ class BwaConsole extends React.Component {
       );
     }
 
-    if (res.data.setTubState.targetTemperature) {
+    if (res.data.mutateTubState.targetTemperature) {
       this.setState({
-        targetTemperature: res.data.setTubState.targetTemperature.toString()
+        targetTemperature: res.data.mutateTubState.targetTemperature.toString()
       });
     } else {
       this.setState({
@@ -97,10 +99,25 @@ class BwaConsole extends React.Component {
       });
     }
   }
+
+  // https://aws.amazon.com/blogs/mobile/appsync-realtime/
+  // Why is this not working?  See the link above for some clues.
+  setupSubscriptions() {
+    var s = API.graphql(
+        graphqlOperation(subscriptions.mutatedTubState)
+    ).subscribe({
+      next: (state) => { 
+        console.log('got new state');
+        console.log(state);
+      }
+    }); 
+    console.log(JSON.stringify(s));
+  }
+
   async componentDidMount() {
     this.setState({});
-
     this.getTubState();
+    this.setupSubscriptions();
   }
 
   seconds_format(secs) {
@@ -161,7 +178,7 @@ class BwaConsole extends React.Component {
 
     if (Math.floor(Date.now() / 1000) - this.state.lastSeenTimestamp > 60 * 30) {
         statusLines.push(
-            <li>
+            <li key="Warning">
             <font color="red">
             {
             "Warning: The last communication with the tub occurred " +
