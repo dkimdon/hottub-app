@@ -22,13 +22,11 @@ class BwaConsole extends React.Component {
   }
   async getTubState() {
     var res = await API.graphql(graphqlOperation(queries.getTubState, {}));
-        console.log(res);
-    var user = 'unknown';
-/*
+    console.log("FIXME - hard coded end range");
     var schedules = await API.graphql(
         graphqlOperation(queries.getSchedules, {
           startRangeBegin: 0,
-          startRangeEnd: 1600000000
+          startRangeEnd: 2000000000
         })
     );
     var user;
@@ -43,9 +41,7 @@ class BwaConsole extends React.Component {
         } else {
           user = 'unknown';
         } 
-        user = JSON.stringify(schedules)
     }
-*/
     if (res.data.getTubState.targetTemperature) {
       this.setState({
         lastReportedTemperature: res.data.getTubState.lastReportedTemperature,
@@ -129,7 +125,7 @@ class BwaConsole extends React.Component {
   async componentDidMount() {
     this.setState({});
     this.getTubState();
-    this.setupSubscriptions();
+    //this.setupSubscriptions();
   }
 
   seconds_format(secs) {
