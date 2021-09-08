@@ -22,6 +22,9 @@ class BwaConsole extends React.Component {
   }
   async getTubState() {
     var res = await API.graphql(graphqlOperation(queries.getTubState, {}));
+        console.log(res);
+    var user = 'unknown';
+/*
     var schedules = await API.graphql(
         graphqlOperation(queries.getSchedules, {
           startRangeBegin: 0,
@@ -32,8 +35,17 @@ class BwaConsole extends React.Component {
     if (res.data.getTubState.externalController) {
         user = "the old app or the buttons on the front of the tub itself";
     } else {
-        user = JSON.stringify(schedules.data.getSchedules[0].email)
+        console.log(schedules);
+        if (schedules && schedules.data &&
+            schedules.data.getSchedules[0] &&
+            schedules.data.getSchedules[0].email) {
+          user = JSON.stringify(schedules.data.getSchedules[0].email)
+        } else {
+          user = 'unknown';
+        } 
+        user = JSON.stringify(schedules)
     }
+*/
     if (res.data.getTubState.targetTemperature) {
       this.setState({
         lastReportedTemperature: res.data.getTubState.lastReportedTemperature,
