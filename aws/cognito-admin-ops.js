@@ -13,6 +13,7 @@ if (process.argv.length < 4) {
     console.log("  action: create/delete");
     console.log("Examples:");
     console.log(path.posix.basename(__filename) + " dkimdon@gmail.com create");
+    console.log(path.posix.basename(__filename) + " dkimdon@gmail.com update David");
     console.log(path.posix.basename(__filename) + " dkimdon@gmail.com delete");
     process.exit(-1);
 }
@@ -27,8 +28,6 @@ var cognitoidentityserviceprovider = new aws.CognitoIdentityServiceProvider({
 });
 
 var customFields = []
-var agencyUpdates = []
-var agencyIds = []
 
 if (action === 'create') {
     console.log('going to create user ' + email);
@@ -56,6 +55,26 @@ if (action === 'create') {
             process.exit(0);
         }
     });
+} else if (action === 'update') {
+    console.log('going to update user ' + email);
+    var userAttributes = [{
+        Name: 'name',
+        Value: process.argv[4]
+    }]
+    var params = {
+        UserPoolId: userPoolId,
+        Username: email,
+        UserAttributes: userAttributes
+    }
+    cognitoidentityserviceprovider.adminUpdateUserAttributes(params,
+        function(err, result) {
+            if (err) {
+                console.log(err);
+                process.exit(-1);
+            } else {
+                process.exit(0);
+            }
+        });
 } else if (action === 'delete') {
     console.log('going to delete user ' + email);
     var params = {
