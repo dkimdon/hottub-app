@@ -1,6 +1,46 @@
 'use strict'
 
+var AWS = require("aws-sdk");
+AWS.config.update({ region: "us-west-2" });
 var ScheduleDao = require('hottub-mysql-dao/lib/scheduleDao.js');
+
+function email(report) {
+  var params = {
+    Destination: {
+      ToAddresses: [
+        "dkimdon@gmail.com",
+        "6507456464@msg.fi.google.com"
+      ],
+    },
+    Message: {
+      Body: {
+        Text: {
+          Charset: "UTF-8",
+          Data: report.user + " made a change to the hot tub control settings. The tub is now set to heat to or maintain a temperature of " + report.target.temperature + " °F",
+        },
+      },
+      Subject: {
+        Charset: "UTF-8",
+        Data: "HotTub: " + report.user + " set tub to " + report.target.temperature + "°F",
+      },
+    },
+    Source: "dkimdon@gmail.com",
+  };
+
+  // Create the promise and SES service object
+  var sendPromise = new AWS.SES({ apiVersion: "2010-12-01" })
+    .sendEmail(params)
+    .promise();
+
+  // Handle promise's fulfilled/rejected states
+  sendPromise
+    .then(function (data) {
+      console.log(data.MessageId);
+    })
+    .catch(function (err) {
+      console.error(err, err.stack);
+    });
+}
 
 exports.lambda_handler = function(event, context, callback) {
 
@@ -59,6 +99,12 @@ exports.lambda_handler = function(event, context, callback) {
             }
             res.start = res.start.getTime() / 1000;
             res.end = res.end.getTime() / 1000;
+            email({
+              user: event.identity.username,
+              target: {
+                temperature: event.arguments.temperature,
+              }
+            });
             callback(err, res);
         });
     } else if (event.field == 'delete-schedule') {

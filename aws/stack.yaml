@@ -7,10 +7,10 @@
       Default: coho-bwa-console
     TubLambdaS3Key:
       Type: String
-      Default: api/devel/bwa-console-lambda-1580666623.zip
+      Default: api/devel/bwa-console-lambda-1713658784.zip
     MysqlLambdaS3Key:
       Type: String
-      Default: api/mysql-lambda/bwa-console-mysql-lambda-1580275007.zip
+      Default: api/mysql-lambda/bwa-console-mysql-lambda-1713660187.zip
     HostingBucketName:
       Type: String
       Default: hottub-cohoecovillage-org
@@ -425,6 +425,12 @@
               Statement:
                 - Effect: Allow
                   Action:
+                     - 'ses:SendEmail'
+                     - 'ses:SendRawEmail'
+                  Resource:
+                     - '*'
+                - Effect: Allow
+                  Action:
                      - 'ec2:CreateNetworkInterface'
                      - 'ec2:DescribeNetworkInterfaces'
                      - 'ec2:DeleteNetworkInterface'
@@ -474,7 +480,7 @@
         Code: 
           S3Bucket: !Ref LambdaS3Bucket
           S3Key: !Ref TubLambdaS3Key
-        Runtime: nodejs12.x
+        Runtime: nodejs18.x
         Timeout: 16
         Role: !GetAtt TubLambdaExecutionRole.Arn
         Handler: index.lambda_handler
@@ -498,7 +504,7 @@
         Code:
           S3Bucket: !Ref LambdaS3Bucket
           S3Key: !Ref MysqlLambdaS3Key
-        Runtime: nodejs12.x
+        Runtime: nodejs18.x
         Timeout: 16
         Role: !GetAtt MysqlLambdaExecutionRole.Arn
         Handler: index.lambda_handler
