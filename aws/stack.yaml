@@ -7,7 +7,7 @@
       Default: coho-bwa-console
     TubLambdaS3Key:
       Type: String
-      Default: api/devel/bwa-console-lambda-1580666623.zip
+      Default: api/devel/bwa-console-lambda-1713661300.zip
     MysqlLambdaS3Key:
       Type: String
       Default: api/mysql-lambda/bwa-console-mysql-lambda-1580275007.zip
@@ -474,7 +474,7 @@
         Code: 
           S3Bucket: !Ref LambdaS3Bucket
           S3Key: !Ref TubLambdaS3Key
-        Runtime: nodejs12.x
+        Runtime: nodejs20.x
         Timeout: 16
         Role: !GetAtt TubLambdaExecutionRole.Arn
         Handler: index.lambda_handler
@@ -498,7 +498,7 @@
         Code:
           S3Bucket: !Ref LambdaS3Bucket
           S3Key: !Ref MysqlLambdaS3Key
-        Runtime: nodejs12.x
+        Runtime: nodejs16.x
         Timeout: 16
         Role: !GetAtt MysqlLambdaExecutionRole.Arn
         Handler: index.lambda_handler

@@ -6,7 +6,7 @@ aws.config.update({
 });
 
 const THING_NAME = 'HotTub';
-const ENDPOINT = 'https://a3fqpqsy13jcnc.iot.us-west-2.amazonaws.com';
+const ENDPOINT = 'https://a3fqpqsy13jcnc-ats.iot.us-west-2.amazonaws.com';
 
 exports.lambda_handler = function(event, context, callback) {
     if (event.field == 'get-tub-state') {
