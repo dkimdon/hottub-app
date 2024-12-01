@@ -7,7 +7,7 @@
       Default: coho-bwa-console
     TubLambdaS3Key:
       Type: String
-      Default: api/devel/bwa-console-lambda-1713661300.zip
+      Default: api/devel/bwa-console-lambda-1733093538.zip
     MysqlLambdaS3Key:
       Type: String
       Default: api/mysql-lambda/bwa-console-mysql-lambda-1580275007.zip
