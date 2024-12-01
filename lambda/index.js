@@ -30,14 +30,16 @@ exports.lambda_handler = function(event, context, callback) {
                 var {
                     set_temperature,
                     heating_mode,
-                    temperature_range
+                    temperature_range,
+                    username
                 } = shadow.state.desired;
                 var state = {
                     lastReportedTemperature: temperature,
                     lastReportTimestamp: temperature_timestamp,
                     lastSeenTimestamp: last_seen_timestamp,
                     targetTemperature: heating_mode == 'ready' ? shadow.state.desired.set_temperature : null,
-                    externalController: shadow.state.desired.external_controller
+                    externalController: shadow.state.desired.external_controller,
+                    username: username
                 };
                 return callback(null, state);
             }
@@ -68,6 +70,11 @@ exports.lambda_handler = function(event, context, callback) {
             }
             desired.heating_mode = 'ready';
             desired.set_temperature = targetTemperature;
+            if (event.identity && event.identity.username) {
+              desired.username = event.identity.username;
+            } else {
+              desired.username = "Unknown"
+            }
         }
         var shadow = {
             state: {
