@@ -30,7 +30,7 @@ class BwaConsole extends React.Component {
     if (res.data.getTubState.externalController) {
         user = "the old app or the buttons on the front of the tub itself";
     } else {
-        user = JSON.stringify(schedules.data.getSchedules[0].email)
+        user = "unknown"
     }
     if (res.data.getTubState.targetTemperature) {
       this.setState({
