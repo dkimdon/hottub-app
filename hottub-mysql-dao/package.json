@@ -7,7 +7,7 @@
     "test": "test"
   },
   "devDependencies": {
-    "async": "^3.1.0",
+    "async": "^3.2.2",
     "mocha": "^6.2.1",
     "nyc": "^14.1.1"
   },
